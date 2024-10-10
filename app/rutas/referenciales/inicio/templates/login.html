@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, rgb(189, 19, 19), rgba(0, 0, 0, 0.8)); /* Degradado profundo para el fondo */
+        }
+
+        .login-form {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(241, 0, 0, 0.9)); /* Color gris oscuro con opacidad */
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); /* Sombra más profunda */
+            width: 100%;
+            max-width: 400px; /* Ancho máximo */
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Transiciones para efecto 3D */
+        }
+
+        .login-form:hover {
+            transform: translateY(-10px); /* Movimiento hacia arriba al pasar el ratón */
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); /* Sombra más intensa al hacer hover */
+        }
+
+        .login-form h2 {
+            color: white; /* Texto blanco para el encabezado */
+            margin-bottom: 20px;
+            font-size: 2rem; /* Tamaño de fuente mayor */
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5); /* Sombra del texto */
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra para inputs */
+            transition: border 0.3s ease, box-shadow 0.3s ease; /* Transición para efectos de enfoque */
+        }
+
+        .login-form input:focus {
+            border: 1px solid rgb(31, 233, 240); /* Color del borde al enfocarse */
+            outline: none; /* Sin contorno */
+            box-shadow: 0 0 5px rgba(13, 210, 236, 0.925), 0 0 10px rgba(31, 233, 240, 0.5); /* Sombra de enfoque */
+        }
+
+        .btn-custom {
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(31, 240, 48, 0.842);
+            border: none;
+            color: white; /* Color del texto blanco */
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; /* Transición para efectos de hover */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra del botón */
+        }
+
+        .btn-custom:hover {
+            background-color: rgb(0, 255, 34);
+            transform: translateY(-2px); /* Movimiento hacia arriba al hacer hover */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Sombra más intensa al hacer hover */
+        }
+
+        .btn-custom:focus {
+            outline: none; /* Sin contorno */
+        }
+
+        .login-form a:hover {
+            text-decoration: underline;
+            color: rgb(8, 184, 228); /* Cambio de color al pasar el ratón */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-form">
+        <h2><strong>Iniciar Sesión</strong></h2>
+        <form action="{{ url_for('login') }}" method="POST" onsubmit="return redirectToPage();">
+            <input type="text" id="username" name="username" placeholder="Usuario" required>
+            <input type="password" id="password" name="password" placeholder="Contraseña" required>
+            <button type="submit" class="btn btn-custom"><strong>Iniciar Sesión</strong></button>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function redirectToPage() {
+            window.location.href = "{{ url_for('inicio.inicioIndex') }}";
+            return false; // Evita el envío del formulario
+        }
+    </script>
+
+</body>
+
+</html>

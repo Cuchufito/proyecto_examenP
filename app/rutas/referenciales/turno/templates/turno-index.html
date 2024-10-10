@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Turnos
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <h3>Listar Turnos</h3>
+
+    <div class="card">
+        <div class="card-header">
+            <button type="button" class="btn btn-success" id="btnAgregar">Agregar</button>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped" id="tbl">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Dia</th>
+                        <th>Horario</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modalFormulario">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalTitle"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="hidden" id="txtIdDia">
+                        <label for="txtDia">Dia:</label>
+                        <input type="text" class="form-control" placeholder="Ingrese el Dia" id="txtDia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="txtHorario">Horario:</label>
+                        <input type="text" class="form-control" placeholder="Ingrese el Horario" id="txtHorario" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="btnGuardar">Guardar</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 d-none" id="rowAlerta">
+        <div class="col col-md-12">
+            <div class="alert alert-success">
+                <strong>Registro Exitoso!</strong>
+                <div class="row" id="mostrarAlerta"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/turnos',
+      columns: [
+        { data: 'id' },
+        { data: 'dia' },
+        { data: 'horario' },
+        { data: function(row) {
+            return `
+              <button type="button" name="btn_editar" class="btn btn-success" data-id="${row.id}">Editar</button>
+              <button type="button" name="btn_eliminar" class="btn btn-danger" data-id="${row.id}">Eliminar</button>`;
+          }
+        }
+      ]
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function() {
+      $('#modalTitle').text("Agregar un Turno");
+      $('#txtIdDia').val("");
+      $('#txtDia').val("");
+      $('#txtHorario').val("");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function() {
+      const idTurno = $('#txtIdDia').val();
+      const dia = $('#txtDia').val();
+      const horario = $('#txtHorario').val();
+      const tabla = $('#tbl').DataTable();
+
+      const method = idTurno ? 'PUT' : 'POST';
+      const url = idTurno ? `/api/v1/turnos/${idTurno}` : `/api/v1/turnos`;
+
+      fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ dia, horario })
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data && data.success) {
+          tabla.ajax.reload();
+          Swal.fire("Éxito", idTurno ? "El Turno ha sido actualizada correctamente." : "El Turno ha sido agregada correctamente.", "success");
+        } else {
+          Swal.fire("Error", data.error || "Ocurrió un error al procesar la solicitud.", "error");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire("Error", "Ocurrió un error inesperado.", "error");
+      })
+      .finally(() => {
+        $('#modalFormulario').modal("hide");
+      });
+    });
+  }
+
+  const editar = () => {
+    $('#tbl tbody').on('click', 'button[name="btn_editar"]', function() {
+      const id = $(this).data('id');
+      const tabla = $('#tbl').DataTable();
+
+      fetch(`/api/v1/turnos/${id}`)
+        .then(resp => resp.json())
+        .then(data => {
+          if (data.success) {
+            $('#modalTitle').text("Editar Turno");
+            $('#txtIdDia').val(data.data.id);
+            $('#txtDia').val(data.data.dia);
+            $('#txtHorario').val(data.data.horario);
+            $('#modalFormulario').modal();
+          } else {
+            Swal.fire("Error", data.error, "error");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          Swal.fire("Error", "Ocurrió un error inesperado.", "error");
+        });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl tbody').on('click', 'button[name="btn_eliminar"]', function() {
+      const id = $(this).data('id');
+      const tabla = $('#tbl').DataTable();
+
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "¡No podrás recuperar este registro!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/turnos/${id}`, {
+            method: 'DELETE'
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Eliminado", "El Turno ha sido eliminada correctamente.", "success");
+            } else {
+              Swal.fire("Error", data.error || "Ocurrió un error al procesar la solicitud.", "error");
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error inesperado.", "error");
+          });
+        }
+      });
+    });
+  }
+
+  $(function() {
+    initDatatable();
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+  });
+</script>
+{% endblock %}
