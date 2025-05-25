@@ -5,8 +5,7 @@ class Conexion:
     """Metodo constructor
     """
     def __init__(self):
-        # https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.parse_dsn
-        dbname = "examenparcialdb"
+        dbname = "taller_db"
         user = "postgres"
         password = "Admin"
         host = "127.0.0.1"

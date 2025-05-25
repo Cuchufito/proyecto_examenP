@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Recepción de Vehículos
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listado de Recepciones</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-success" id="btnAgregar">
+        <i class="fas fa-plus"></i> Nueva Recepción
+      </button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tblRecepciones">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Vehículo</th>
+            <th>Motivo</th>
+            <th>Kilometraje</th>
+            <th>Combustible</th>
+            <th>% Combustible</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Modal de formulario -->
+  <div class="modal fade" id="modalRecepcion">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle">Nueva Recepción</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="formRecepcion">
+            <input type="hidden" id="txtIdRecepcion">
+
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="txtFecha">Fecha recepción:</label>
+                <input type="date" class="form-control" id="txtFecha" required>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="selVehiculo">Vehículo (ID):</label>
+                <input type="number" class="form-control" id="selVehiculo" placeholder="ID vehículo" required>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="txtEstado">Estado:</label>
+                <select class="form-control" id="txtEstado">
+                  <option value="pendiente">Pendiente</option>
+                  <option value="en proceso">En proceso</option>
+                  <option value="completado">Completado</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="txtMotivo">Motivo ingreso:</label>
+              <textarea class="form-control" id="txtMotivo" rows="2" required></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="txtKilometraje">Kilometraje:</label>
+                <input type="number" class="form-control" id="txtKilometraje" required>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="txtCombustible">Nivel combustible:</label>
+                <input type="text" class="form-control" id="txtCombustible" placeholder="Ej: F, 1/2, L">
+              </div>
+              <div class="form-group col-md-4">
+                <label for="txtPctCombustible">% Combustible:</label>
+                <input type="number" class="form-control" id="txtPctCombustible" min="0" max="100">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="txtObservaciones">Observaciones:</label>
+              <textarea class="form-control" id="txtObservaciones" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tblRecepciones').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/recepciones',
+      columns: [
+        { data: 'recepcion_id' },
+        { data: 'fecha_recepcion' },
+        { data: 'vehiculo_id' },
+        { data: 'motivo_ingreso' },
+        { data: 'kilometraje' },
+        { data: 'nivel_combustible' },
+        { data: 'porcentaje_combustible' },
+        { data: 'estado' },
+        {
+          data: null,
+          render: (d, type, row) => `
+            <button class="btn btn-sm btn-warning btn-editar" data-id="${row.recepcion_id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger btn-eliminar" data-id="${row.recepcion_id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+        }
+      ]
+    });
+  }
+
+  const abrirModal = () => {
+    $('#btnAgregar').click(() => {
+      $('#modalTitle').text("Nueva Recepción");
+      $('#formRecepcion')[0].reset();
+      $('#txtIdRecepcion').val('');
+      $('#txtFecha').val(new Date().toISOString().slice(0,10));
+      $('#modalRecepcion').modal('show');
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').click(() => {
+      const id = $('#txtIdRecepcion').val();
+      const payload = {
+        fecha_recepcion: $('#txtFecha').val(),
+        vehiculo_id: parseInt($('#selVehiculo').val(), 10),
+        motivo_ingreso: $('#txtMotivo').val(),
+        kilometraje: parseInt($('#txtKilometraje').val(), 10),
+        nivel_combustible: $('#txtCombustible').val(),
+        porcentaje_combustible: parseInt($('#txtPctCombustible').val(), 10),
+        observaciones: $('#txtObservaciones').val(),
+        estado: $('#txtEstado').val()
+      };
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id
+        ? `/api/v1/recepciones/${id}`
+        : '/api/v1/recepciones';
+
+      $.ajax({
+        url, type: method,
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: () => {
+          $('#tblRecepciones').DataTable().ajax.reload();
+          $('#modalRecepcion').modal('hide');
+          Swal.fire('Éxito', id ? 'Recepción actualizada' : 'Recepción creada', 'success');
+        },
+        error: (xhr) => {
+          Swal.fire('Error', xhr.responseJSON.message || 'Error al procesar la solicitud', 'error');
+        }
+      });
+    });
+  }
+
+  const editar = () => {
+    $('#tblRecepciones').on('click', '.btn-editar', function() {
+      const id = $(this).data('id');
+      $.get(`/api/v1/recepciones/${id}`, resp => {
+        $('#modalTitle').text("Editar Recepción");
+        $('#txtIdRecepcion').val(resp.data.recepcion_id);
+        $('#txtFecha').val(resp.data.fecha_recepcion);
+        $('#selVehiculo').val(resp.data.vehiculo_id);
+        $('#txtMotivo').val(resp.data.motivo_ingreso);
+        $('#txtKilometraje').val(resp.data.kilometraje);
+        $('#txtCombustible').val(resp.data.nivel_combustible);
+        $('#txtPctCombustible').val(resp.data.porcentaje_combustible);
+        $('#txtObservaciones').val(resp.data.observaciones);
+        $('#txtEstado').val(resp.data.estado);
+        $('#modalRecepcion').modal('show');
+      }).fail(() => {
+        Swal.fire('Error', 'No se pudo cargar la recepción', 'error');
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tblRecepciones').on('click', '.btn-eliminar', function() {
+      const id = $(this).data('id');
+      Swal.fire({
+        title: '¿Eliminar recepción?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if (result.isConfirmed) {
+          $.ajax({
+            url: `/api/v1/recepciones/${id}`,
+            type: 'DELETE',
+            success: () => {
+              $('#tblRecepciones').DataTable().ajax.reload();
+              Swal.fire('Eliminado', 'Recepción eliminada', 'success');
+            },
+            error: () => {
+              Swal.fire('Error', 'No se pudo eliminar la recepción', 'error');
+            }
+          });
+        }
+      });
+    });
+  }
+
+  $(function() {
+    initDatatable();
+    abrirModal();
+    guardar();
+    editar();
+    eliminar();
+  });
+</script>
+{% endblock %}
